@@ -38,6 +38,6 @@ def mix_star(star):
             mass_species[j] /= mass_total
 
         # Set the abundances of the stars
-        for i in range(idx_start, idx_end):
+        for k in range(idx_start, idx_end):
             for j in range(N_species):
-                star.X0[i][species[j]] = mass_species[j]
+                star.X0[k][species[j]] = mass_species[j]
