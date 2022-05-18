@@ -21,7 +21,8 @@ def eos_rhoT(rho,T,Xi):
     Erad = 3*Prad/rho
     Srad = (Prad/rho + Erad)/T
 
-
+    cv = 1.5*cgas/mu + 16.*(sigma_SB/clight)*pow(T,3)/rho
+    cp = 2.5*cgas/mu
 
     E = Egas + Erad
     P = Pgas + Prad
@@ -33,5 +34,5 @@ def eos_rhoT(rho,T,Xi):
     Gamma2 = (32-24*beta-3*beta*beta)/(24-18*beta - 3*beta*beta)
     Gamma3 = (32-27*beta)/(24-21*beta)
 
-    results = [P, E, S, Gamma1, Gamma2, Gamma3]
+    results = [P, Prad, Pgas, E, Erad, Egas, S, Gamma1, Gamma2, Gamma3, cv, cp]
     return results
