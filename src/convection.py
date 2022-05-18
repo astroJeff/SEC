@@ -19,10 +19,10 @@ def gradT_MLT(rho,T,Xi,grad_rad,grav,alpha_MLT):
     opac=calc_opacity(T,rho,Xi,[1,2,8],[1,4,16],3,0.0, 0.0, 0.0)
     kappa=opac[2]
 
-    
+
     pressure_scale_height = P/(grav*rho)
     Lambda = alpha_MLT * pressure_scale_height
-    
+
     omega = Lambda * rho * kappa
     a0 = 0.1875 * mlt_f2 * mlt_f3/(1. + mlt_f4/(omega*omega))
     A_0 = sqrt(mlt_f1*P*Q0*rho)
@@ -51,4 +51,28 @@ def gradT_MLT(rho,T,Xi,grad_rad,grav,alpha_MLT):
 
     gradT = (1 - Zeta)*grad_rad + Zeta*grad_ad
 
-    return gradT
+    if grad_rad > grad_ad:
+        return gradT, 1
+    else:
+        return gradT, 0
+
+def calc_star_gradT(star):
+
+    # Gravitational acceleration
+    grav = -c.G * star.mass / star.radius**2
+
+    # Radiative gradient
+    grad_rad = (star.pressure * star.opacity * star.luminosity) / (16*np.pi * c.clight * c.G * star.mass * star.pressure_radiative)
+
+    gradT = np.zeros(star.N_cells)
+    convective = np.zeros(star.N_cells)
+    for k in range(star.N_cells):
+
+        gradT[k], convective[k] = gradT_MLT(star.rho[k],
+                                            star.T[k],
+                                            star.X0[k],
+                                            grad_rad[k],
+                                            grav[k],
+                                            star.alpha_MLT)
+
+    return gradT, convective

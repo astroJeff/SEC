@@ -32,6 +32,10 @@ class Star:
         self.X0 = np.zeros(self.N_cells, dtype=elements_dtype)
 
 
+        # Physics choices
+        self.alpha_MLT = 2.0
+
+
     def initialize_star(self, polytropic_index):
 
         if polytropic_index < 0 or polytropic_index > 5-1e-5:
@@ -92,7 +96,7 @@ class Star:
     def evolve(self, time):
 
         while self.age < time:
-            self.step()
+            self.step(dt)
 
 
     def step(self, dt):
