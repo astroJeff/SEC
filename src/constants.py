@@ -9,3 +9,4 @@ avo = 6.02214076e23
 cgas = kB*avo
 sigma_SB=5.67e-5
 mp = 1.67272e-24
+crad = 4*sigma_SB/clight
