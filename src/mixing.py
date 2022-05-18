@@ -28,12 +28,12 @@ def mix_star(star):
 
         # Sum up all the mass of each species in the convective region
         for j in range(N_species):
-            mass_species[j] = np.sum(X0[idx_start:idx_end][species[j]])
+            mass_weighted_species[j] = np.sum(star.X0[idx_start:idx_end][species[j]] * star.dm[idx_start:idx_end])
 
-        # Total mass for each species
-        mass_total = np.sum(mass_species)
+        # Total mass for all species
+        mass_total = np.sum(mass_weighted_species)
 
-        # Normalize to get fraction of mass for each species
+        # Normalize to get fractional mass for each species
         for j in range(N_species):
             mass_species[j] /= mass_total
 
