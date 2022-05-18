@@ -1,12 +1,12 @@
 import numpy as np
-from scipy.integrate import odeint
+from scipy.integrate import odeint, solve_ivp
 
-
-from .nucleosynthesis import calc_burning
+import constants as c
+from nucleosynthesis import calc_burning
 
 class Star:
 
-    def __init__(self, mass, N_cells=100, elements=['H','He','Z']):
+    def __init__(self, mass=1, radius=1, N_cells=100, elements=['H','He','Z']):
 
         # Bookkeeping
         self.N_cells = N_cells
@@ -14,21 +14,22 @@ class Star:
 
         # Bulk stellar properties
         self.mass = mass
+        self.radius = radius
         self.luminosity = 0
-        self.radius = 0
         self.age = 0
         self.central_pressure = 0
         self.central_T = 0
         self.central_rho = 0
 
         # Cell properties
-        self.cells_T = np.zeros(N)
-        self.cells_rho = np.zeros(N)
-        self.cells_mass = np.zeros(N)
-        self.cells_radius = np.zeros(N)
+        self.cells_T = np.zeros(self.N_cells)
+        self.cells_rho = np.zeros(self.N_cells)
+        self.cells_mass = np.zeros(self.N_cells)
+        self.cells_radius = np.zeros(self.N_cells)
+        self.cells_mu = np.zeros(self.N_cells)
 
         elements_dtype = [(el,'f8') for el in elements]
-        self.X0 = np.zeros(N, dtype=elements_dtype)
+        self.X0 = np.zeros(self.N_cells, dtype=elements_dtype)
 
 
     def initialize_star(self, polytropic_index):
@@ -37,8 +38,6 @@ class Star:
             print("We cannot initialize the star with this polytropic index")
             return
 
-
-
         def func(xi, x, n):
             theta, phi = x
             dtheta_dxi = -phi / xi**2
@@ -46,14 +45,13 @@ class Star:
             derivs = [dtheta_dxi, dphi_dxi]
             return derivs
 
-
         def event(xi, x, n):
             theta, phi = x
             return theta - 1.0e-10
 
 
         x0 = [1, 0]
-        n = 3/2
+        n = polytropic_index
 
         # Solve first to find maximum xi
         xi = [1e-9, 20]
@@ -69,15 +67,25 @@ class Star:
         theta = res[:,0]
         phi = res[:,1]
 
-        alpha = self.radius / xi_max
-        central_rho = self.mass / (4*np.pi*alpha**3*phi[-1])
+        alpha = (self.radius*c.Rsun) / xi_max
+        central_rho = (self.mass*c.Msun) / (4*np.pi*alpha**3*phi[-1])
         K_const = 4*np.pi*c.G*alpha**2 / ((n+1) * central_rho**(1/n-1))
 
         self.cells_radius = alpha * xi
         self.cells_mass = 4*np.pi*alpha**3 * central_rho * phi
         self.cells_density = central_rho * theta**n
         self.cells_pressure = K_const * central_rho**(1+1/n) * theta**(n+1)
-        self.cells_T = K*self.cells_mu/c.kB * central_rho**(1/n) * theta
+
+        # Set the composition
+        self.X0['H'] = 0.70
+        self.X0['He'] = 0.28
+        self.X0['Z'] = 0.02
+
+        mu_inv = self.X0['H'] + 0.25*self.X0['He'] + 0.0625*self.X0['Z']
+        self.cells_mu = 1/mu_inv
+
+        # Set the temperature
+        self.cells_T = K_const*self.cells_mu/c.kB * central_rho**(1/n) * theta
 
         self.initialized = True
 
