@@ -85,7 +85,7 @@ class Star:
         self.cells_mu = 1/mu_inv
 
         # Set the temperature
-        self.cells_T = K_const*self.cells_mu/c.kB * central_rho**(1/n) * theta
+        self.cells_T = self.cells_pressure/self.cells_density * self.cells_mu / c.kB * c.mp
 
         self.initialized = True
 
