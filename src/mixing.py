@@ -9,10 +9,10 @@ def mix_star(star):
     idx_end = []
     while i < star.N_cells:
 
-        if star.cells_convective[i] == 1:
+        if star.convective[i] == 1:
 
             idx_start.append(i)
-            while i < star.N_cells and star.cells_convective[i] == 1:
+            while i < star.N_cells and star.convective[i] == 1:
                 i += 1
             idx_end.append(i)
 

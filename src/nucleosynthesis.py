@@ -23,9 +23,9 @@ def calc_burning(rho, T, X0):
 
 def calc_pp(rho, T, X0):
 
-    X = X0[0]
-    Y = X0[1]
-    Z = X0[2]
+    X = X0['H']
+    Y = X0['He']
+    Z = X0['Z']
 
     T6 = T/1e6
 
@@ -39,9 +39,9 @@ def calc_pp(rho, T, X0):
 
 def calc_cno(rho, T, X0):
 
-    X = X0[0]
-    Y = X0[1]
-    Z = X0[2]
+    X = X0['H']
+    Y = X0['He']
+    Z = X0['Z']
 
     T6 = T/1e6
 
@@ -54,9 +54,9 @@ def calc_cno(rho, T, X0):
 
 def calc_triple_alpha(rho, T, X0):
 
-    X = X0[0]
-    Y = X0[1]
-    Z = X0[2]
+    X = X0['H']
+    Y = X0['He']
+    Z = X0['Z']
 
     T8 = T/1e8
 

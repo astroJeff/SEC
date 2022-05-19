@@ -1,3 +1,4 @@
+import numpy as np
 from constants import *
 from eos import eos_rhoT
 from opacity import calc_opacity
@@ -59,10 +60,14 @@ def gradT_MLT(rho,T,Xi,grad_rad,grav,alpha_MLT):
 def calc_star_gradT(star):
 
     # Gravitational acceleration
-    grav = -c.G * star.mass / star.radius**2
+    grav = -G * star.mass / star.radius**2
+
+    # Call eos to get radiative pressure
+    eos = eos_rhoT(star.rho,star.T,star.X0)
+    radiative_pressure = eos[1]
 
     # Radiative gradient
-    grad_rad = (star.pressure * star.opacity * star.luminosity) / (16*np.pi * c.clight * c.G * star.mass * star.pressure_radiative)
+    grad_rad = (star.pressure * star.opacity * star.luminosity) / (16*np.pi * clight * G * star.mass * radiative_pressure)
 
     gradT = np.zeros(star.N_cells)
     convective = np.zeros(star.N_cells)

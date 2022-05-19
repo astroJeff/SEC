@@ -3,6 +3,9 @@ from scipy.integrate import odeint, solve_ivp
 
 import constants as c
 from nucleosynthesis import calc_burning
+from convection import calc_star_gradT
+from opacity import calc_star_opacity
+
 
 class Star:
 
@@ -13,20 +16,22 @@ class Star:
         self.initialized = False
 
         # Bulk stellar properties
-        self.mass = mass
-        self.radius = radius
-        self.luminosity = 0
+        self.star_mass = mass
+        self.star_radius = radius
+        self.star_luminosity = 0
         self.age = 0
         self.central_pressure = 0
         self.central_T = 0
         self.central_rho = 0
 
         # Cell properties
-        self.cells_T = np.zeros(self.N_cells)
-        self.cells_rho = np.zeros(self.N_cells)
-        self.cells_mass = np.zeros(self.N_cells)
-        self.cells_radius = np.zeros(self.N_cells)
-        self.cells_mu = np.zeros(self.N_cells)
+        self.T = np.zeros(self.N_cells)
+        self.rho = np.zeros(self.N_cells)
+        self.mass = np.zeros(self.N_cells)
+        self.radius = np.zeros(self.N_cells)
+        self.mu = np.zeros(self.N_cells)
+        self.opacity = np.zeros(self.N_cells)
+        self.luminosity = np.zeros(self.N_cells)
 
         elements_dtype = [(el,'f8') for el in elements]
         self.X0 = np.zeros(self.N_cells, dtype=elements_dtype)
@@ -63,7 +68,6 @@ class Star:
         res = solve_ivp(func, xi, x0, args=(n,), events=event, atol=1.0e-20, rtol=1.0e-20)
         xi_max = res.t_events[0][0] - 1.0e-2
 
-
         # Solve again to get profile
         xi = np.linspace(1e-9, xi_max, self.N_cells)
         res = odeint(func, x0, xi, args=(n,), tfirst=True)
@@ -71,14 +75,14 @@ class Star:
         theta = res[:,0]
         phi = res[:,1]
 
-        alpha = (self.radius*c.Rsun) / xi_max
-        central_rho = (self.mass*c.Msun) / (4*np.pi*alpha**3*phi[-1])
+        alpha = (self.star_radius*c.Rsun) / xi_max
+        central_rho = (self.star_mass*c.Msun) / (4*np.pi*alpha**3*phi[-1])
         K_const = 4*np.pi*c.G*alpha**2 / ((n+1) * central_rho**(1/n-1))
 
-        self.cells_radius = alpha * xi
-        self.cells_mass = 4*np.pi*alpha**3 * central_rho * phi
-        self.cells_density = central_rho * theta**n
-        self.cells_pressure = K_const * central_rho**(1+1/n) * theta**(n+1)
+        self.radius = alpha * xi
+        self.mass = 4*np.pi*alpha**3 * central_rho * phi
+        self.rho = central_rho * theta**n
+        self.pressure = K_const * central_rho**(1+1/n) * theta**(n+1)
 
         # Set the composition
         self.X0['H'] = 0.70
@@ -86,10 +90,31 @@ class Star:
         self.X0['Z'] = 0.02
 
         mu_inv = self.X0['H'] + 0.25*self.X0['He'] + 0.0625*self.X0['Z']
-        self.cells_mu = 1/mu_inv
+        self.mu = 1/mu_inv
 
         # Set the temperature
-        self.cells_T = self.cells_pressure/self.cells_density * self.cells_mu / c.kB * c.mp
+        self.T = self.pressure/self.rho * self.mu / c.kB * c.mp
+
+        # Set the mass of each cell
+        mass_inner = np.append([0], self.mass[:-1])
+        self.dm = self.mass - mass_inner
+
+        # Calculate the initial nuclear burning
+        eps_nuc, dX_dt, dY_dt, dZ_dt = calc_burning(self.rho, self.T, self.X0)
+
+        # Calculate the luminosity
+        self.luminosity[0] = 0
+        for i in range(self.N_cells-1):
+            self.luminosity[i+1] = self.luminosity[i] + self.dm[i+1] * eps_nuc[i+1]
+
+
+        # Set the opacity
+        calc_star_opacity(self)
+
+        # Set convective regions
+        gradT, convective = calc_star_gradT(self)
+        self.convective = convective
+
 
         self.initialized = True
 

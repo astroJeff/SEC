@@ -47,7 +47,7 @@ def calc_opacity(T, rho, xmass, zion, aion, ionmax, pep_in, xne_in, eta):
     pep = pep_in + tiny
 
 
-    
+
     # Switch for the Iben & Christy regimes
     T6_switch1 = 1
     T6_switch2 = 1.5
@@ -86,7 +86,7 @@ def calc_opacity(T, rho, xmass, zion, aion, ionmax, pep_in, xne_in, eta):
         oiben1 = xkap * (rho/dbar)**0.67
 
     if (xh<1.0e-5 or T6>T6_switch1) and (xh>=1.0e5 or xz<=zbound):
-        
+
         if T6>T6_switch1:
             d0log = -(3.868 + 0.806*xh) + 1.8*np.log(T6)
         else:
@@ -170,7 +170,7 @@ def calc_opacity(T, rho, xmass, zion, aion, ionmax, pep_in, xne_in, eta):
     log_drel = np.log10(drel)
     drelim = log_drel + 1.0
     if (log_rho < drelim):
-        zdel = xne/(avo*T6*np.sqrt(T6)) 
+        zdel = xne/(avo*T6*np.sqrt(T6))
         log_zdel = np.log10(zdel)
         eta0 = np.exp(-1.20322 + (2/3) * np.log(zdel))
         eta02 = eta0*eta0
@@ -283,3 +283,20 @@ def calc_opacity(T, rho, xmass, zion, aion, ionmax, pep_in, xne_in, eta):
     sigma   = k2c/(opac*rho)  * T**3
 
     return orad, ocond, opac, srad, scond, sigma
+
+
+def calc_star_opacity(star):
+
+    # Set the opacity of the star
+    for i in range(star.N_cells):
+        orad, ocond, opac, srad, scond, sigma = calc_opacity(star.T[i],
+                                                             star.rho[i],
+                                                             star.X0[i],
+                                                             [1,2,8],
+                                                             [1,4,16],
+                                                             3,
+                                                             0,
+                                                             0,
+                                                             0)
+
+        star.opacity[i] = opac
