@@ -70,10 +70,26 @@ class Star:
 
         # Solve again to get profile
         xi = np.linspace(1e-9, xi_max, self.N_cells)
-        res = odeint(func, x0, xi, args=(n,), tfirst=True)
+        res = odeint(func, x0, xi, args=(n,), tfirst=True, atol=1.0e-20, rtol=1.0e-20)
 
         theta = res[:,0]
         phi = res[:,1]
+
+
+        # Deal with any errant NaN's
+        idx = np.where(np.isnan(theta))
+        if np.any(idx):
+            idx = idx[0][0]
+            xi_max = xi[idx-1]
+            theta = theta[:idx-1]
+            phi = phi[:idx-1]
+
+
+        print(theta)
+        print(phi)
+
+
+
 
         alpha = (self.star_radius*c.Rsun) / xi_max
         central_rho = (self.star_mass*c.Msun) / (4*np.pi*alpha**3*phi[-1])
